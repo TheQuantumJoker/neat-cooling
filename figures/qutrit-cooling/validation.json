@@ -1,0 +1,37 @@
+{
+  "model": {
+    "energies": [
+      0.0,
+      0.003,
+      0.1
+    ],
+    "beta": 1.0,
+    "r_theta": 0.5,
+    "r_phi": 10.0,
+    "near_scale": 53.62484152434405,
+    "far_scale": 206.0341352609942,
+    "max_scale": 300.0
+  },
+  "max_bvp_length_error": 3.086420008457935e-14,
+  "max_bvp_path_error": 2.235572837960831e-12,
+  "minimum_sampled_transition_rate": 3.3263986977243954e-14,
+  "residuals": {
+    "column_sum": 3.552713678800501e-15,
+    "stationary": 6.661338147750939e-16,
+    "detailed_balance": 4.440892098500626e-16,
+    "drazin_identity": 2.0539125955565396e-15,
+    "metric_identity": 1.5653322734581255e-15,
+    "endpoint": 2.7755575615628914e-16,
+    "spectrum": 7.105427357601002e-15
+  },
+  "near_length": 0.4746467088911218,
+  "far_length": 0.3889782253268385,
+  "dissipation_reduction": 0.3284016301416183,
+  "local_peak_scale": 53.62484349848132,
+  "local_peak_length": 0.4746467088911213,
+  "xi_B": 0.01864807307136142,
+  "xi_C": 0.004853564715542388,
+  "local_minimum_length": 0.3889782253268386,
+  "bvp_count": 33,
+  "scope": "Equilibrium-path geometry, not finite-time master-equation integration."
+}
