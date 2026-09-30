@@ -18,33 +18,48 @@ Use Python 3.11 and install the pinned plotting/numerical dependencies:
 python -m pip install -r requirements.txt
 python codes/qutrit_cooling.py
 python codes/birth_death.py --mode plot
-python codes/qutrit_endpoint_vectors.py
 python codes/carnot_cycle_diagram.py
 ```
 
 Outputs are written to `figures/` relative to this repository, independent of
-the current working directory. The committed PDFs are the manuscript assets;
-PNG and SVG versions are included for inspection and editing.
+the current working directory. The committed PDFs are the current manuscript
+assets. The introductory qualitative illustration is supplied as a PNG.
+The qutrit and birth–death scripts additionally generate PNG/SVG previews and
+numerical reports. Existing PNG/SVG previews, qutrit CSV files, and generated
+JSON reports are retained as **earlier snapshots** and have not been refreshed
+in this synchronization. Use the committed PDFs for the current manuscript;
+rerun the scripts to regenerate the other formats and reports with current parameters.
 
 ## Models and files
 
 | Model | Code | Data and outputs |
 | --- | --- | --- |
-| Qutrit with constant relaxation eigenrates | `codes/qutrit_cooling.py` | `figures/qutrit-cooling/`: exact and numerical distances, paths, figures, validation |
+| Qutrit with constant relaxation eigenrates | `codes/qutrit_cooling.py` | `figures/qutrit-cooling/`: sphere geometry with endpoint vectors and exact-distance plot; running the script also generates paths and validation data |
 | Birth–death ladder with structured and Ohmic baths | `codes/birth_death.py`, `codes/birth_death_plot.py` | `codes/data/birth-death/`: original curve samples and certification report; `figures/birth-death/`: combined plot |
-| Endpoint tangent illustration | `codes/qutrit_endpoint_vectors.py` | `figures/qutrit-cooling/qutrit-endpoint-vectors.*` |
 | Carnot-cycle schematic | `codes/carnot_cycle_diagram.py` | `figures/thermal-machines/` |
+| Introductory qualitative illustration | Supplied artwork | `figures/introduction/neat-vs-mpemba-final.png` |
 
-The qutrit calculation uses reference energies `(0, 0.003, 0.1)`, bath inverse
-temperature `1`, and relaxation eigenrates `r_theta=0.5`, `r_phi=10`. Its
+The qutrit calculation uses reference energies `(0, 0.03, 1)`, bath inverse
+temperature `0.1`, and relaxation eigenrates `r_theta=5`, `r_phi=100`. Its
 geodesic boundary-value solution is checked against the exact spherical
 construction and Markov-generator identities.
 
 The birth–death calculation uses energies `(0, 0.72, 2.40)` for `d=3` and
 `(0, 0.72, 2.40, 2.70)` for `d=4`, with couplings `(1, 0.30)` and
-`(1, 0.30, 1)`. The bath parameters are `A=10`, `Omega=1`, `gamma=0.30`,
-`omega_c=10`; the Ohmic control sets only `A=0`. Bath inverse temperature is
-`1`. Figure axes use `xi = beta_i / beta_f = T_f / T_i` and distance `D`.
+`(1, 0.30, 1)`. In manuscript notation the bath parameters are `A=10`,
+`nu_0=1`, `gamma_B=0.30`, `nu_c=10`; the Ohmic control sets only `A=0`.
+Bath inverse temperature is `1`. Both distance panels use the logarithmic
+horizontal coordinate `beta'/beta`, increasing toward colder targets, and
+vertical coordinate `L(beta -> beta')`. The preserved birth–death CSV uses
+the reciprocal temperature ratio internally; the plotting code converts it.
+
+The manuscript combines the qutrit sphere, qutrit distance, and birth–death
+distance into three panels in one row. The qutrit sphere uses Gibbs-population
+labels `sqrt(omega_a)` and includes the arriving tangent and Gibbs-curve
+derivative. The distance panel displays the exact curve without numerical
+geodesic markers. The Carnot schematic has enlarged labels for its end-matter
+placement. The introductory figure is supplied artwork, not a simulation or
+a Python-generated plot.
 
 ## Reproducibility status
 
@@ -61,6 +76,8 @@ The birth–death calculation uses energies `(0, 0.72, 2.40)` for `d=3` and
   The archived convergence report records earlier checks; replotting does not
   rerun them. A tested JAX dependency pin should accompany restoration of the
   coefficient archives.
+- `codes/qutrit_endpoint_vectors.py` is the older standalone tangent illustration;
+  the current sphere panel incorporates its vectors directly in `qutrit_cooling.py`.
 - `legacy/mpemba.nb` is the inherited Mathematica notebook, retained for
   provenance; it is not needed to reproduce the current figures.
 
@@ -71,3 +88,8 @@ and copy the corresponding files from `figures/` into Overleaf's `figures/`
 directory. Commit the code and regenerated data/figures together so their
 parameters and results remain traceable. Publication releases can be tagged
 once the article and numerical material are finalized.
+
+The current repository snapshot was synchronized from the manuscript's active
+code and figure assets on 30 September 2026. No numerical solvers were rerun
+as part of that synchronization; the birth–death source data and certification
+report are unchanged.

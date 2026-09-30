@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 navy,teal,red,amber='#19344A','#007E87','#C54E53','#CF8B24'
-plt.rcParams.update({'font.family':'DejaVu Sans','font.size':12,'text.color':navy,
+plt.rcParams.update({'font.family':'DejaVu Sans','font.size':18,'text.color':navy,
  'axes.labelcolor':navy,'xtick.color':navy,'ytick.color':navy,'pdf.fonttype':42})
 fig,ax=plt.subplots(figsize=(9.4,6.4))
 a,b,tc,th=.3,.85,1,2
@@ -28,18 +28,17 @@ ax.text((a+b)/2,tc-.22,'3  Cold isotherm',color=teal,ha='center',weight='bold')
 ax.text((a+b)/2,tc-.40,r'$|Q_c|=T_c\Delta S$ leaves',color=teal,ha='center')
 ax.text(b+.025,1.5,'2  Isentropic\ncooling\n'+r'$Q=0$',ha='left',va='center',linespacing=1.5)
 ax.text(a-.025,1.5,'4  Isentropic\nheating\n'+r'$Q=0$',ha='right',va='center',linespacing=1.5)
-ax.text((a+b)/2,1.57,'Enclosed area = work out',ha='center',fontsize=12)
-ax.text((a+b)/2,1.40,r'$W_{\rm rev}=(T_h-T_c)\Delta S$',ha='center',fontsize=14)
+ax.text((a+b)/2,1.57,'Enclosed area = work out',ha='center',fontsize=18)
+ax.text((a+b)/2,1.40,r'$W_{\rm rev}=(T_h-T_c)\Delta S$',ha='center',fontsize=20)
 ax.set(xlim=(.01,1.13),ylim=(.42,2.55),xlabel='Entropy $S$',ylabel='Temperature $T$')
 ax.set_xticks([a,b],labels=[r'$S_{\rm lo}$',r'$S_{\rm hi}$'])
 ax.set_yticks([tc,th],labels=[r'$T_c$',r'$T_h$'])
 ax.tick_params(length=0,pad=9)
 for spine in ['top','right']:ax.spines[spine].set_visible(False)
 for spine in ['bottom','left']:ax.spines[spine].set_color('#A5B1B9')
-ax.set_title('Carnot cycle: fixed baths, driven Hamiltonian',loc='left',pad=15,fontsize=16)
-fig.text(.5,.015,r'Reversible reference cycle; $0<\lambda<1$. Corner labels give the actual Hamiltonian.',ha='center',fontsize=10)
-fig.subplots_adjust(left=.09,right=.97,bottom=.13,top=.89)
+ax.set_title('Carnot cycle: fixed baths, driven Hamiltonian',loc='left',pad=15,fontsize=20)
+fig.text(.5,.015,r'Reversible reference cycle; $0<\lambda<1$. Corner labels give the actual Hamiltonian.',ha='center',fontsize=14)
+fig.subplots_adjust(left=.09,right=.97,bottom=.19,top=.89)
 output=Path(__file__).resolve().parents[1]/'figures/thermal-machines'
 output.mkdir(parents=True, exist_ok=True)
-for suffix in ['png','svg','pdf']:
- fig.savefig(output/f'carnot-temperature-entropy.{suffix}',dpi=200,bbox_inches='tight',pad_inches=.06)
+fig.savefig(output/'carnot-temperature-entropy.pdf',dpi=200,bbox_inches='tight',pad_inches=.06)

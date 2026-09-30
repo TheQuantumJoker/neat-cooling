@@ -1,4 +1,4 @@
-"""Single-column birth--death plot; preserve the supplied numerical samples."""
+"""Birth--death panel for the combined three-panel figure; preserve the supplied numerical samples."""
 from pathlib import Path
 import csv
 import hashlib
@@ -9,7 +9,7 @@ def make_plot(curve_file, output_dir, certification_file=None):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import AutoMinorLocator, NullFormatter
+    from matplotlib.ticker import AutoMinorLocator, NullFormatter, MaxNLocator
     from qutrit_cooling import save_figure
 
     curve_file, output_dir = Path(curve_file), Path(output_dir)
@@ -36,23 +36,23 @@ def make_plot(curve_file, output_dir, certification_file=None):
         raise ValueError('Lengths must be finite and nonnegative.')
 
     navy, teal, amber = '#19344A', '#007E87', '#CF8B24'
-    plt.rcParams.update({'font.family':'DejaVu Sans', 'font.size':10,
+    plt.rcParams.update({'font.family':'DejaVu Sans', 'font.size':16,
         'axes.labelcolor':navy, 'text.color':navy, 'axes.edgecolor':'#A5B1B9',
         'xtick.color':navy, 'ytick.color':navy, 'pdf.fonttype':42, 'ps.fonttype':42,
         'axes.spines.top':False, 'axes.spines.right':False})
     fig, ax = plt.subplots(figsize=(4.5, 3.8))
     for d, color in [(3, teal), (4, amber)]:
-        ax.plot(xi, values[d][0], color=color, lw=2)
-        ax.plot(xi, values[d][1], color=color, lw=1.7, linestyle=(0,(4,2.5)))
+        ax.plot(1/xi, values[d][0], color=color, lw=2)
+        ax.plot(1/xi, values[d][1], color=color, lw=1.7, linestyle=(0,(4,2.5)))
 
     certification_file = Path(certification_file) if certification_file else curve_file.with_name('thermodynamic_length_certification.json')
     report = {'source':curve_file.name,
               'source_sha256':hashlib.sha256(curve_file.read_bytes()).hexdigest(),
               'samples_per_curve':len(xi), 'interpolation':'none; straight segments between original samples',
-              'xi_definition':'beta_i / beta_f = T_f / T_i',
+              'x_definition':"beta_prime / beta = T_i / T_f",
               'checks':{}}
-    near, far = 1/4.25, 1/9
-    ax.axvspan(far,near,color=teal,alpha=.065,lw=0)
+    near, far = 4.25, 9
+    ax.axvspan(near,far,color=teal,alpha=.065,lw=0)
     for x in (far,near):
         ax.axvline(x,color='#A5B1B9',lw=.7,linestyle=(0,(2,3)),zorder=0)
     if certification_file.exists():
@@ -69,17 +69,17 @@ def make_plot(curve_file, output_dir, certification_file=None):
             raise ValueError('Ohmic control no longer monotone along cooling.')
         report['checks'][f'd{d}_ohmic_monotone'] = True
     ymax = max(v.max() for curves in values.values() for v in curves)
-    ax.set(xscale='log',xlim=(.1,1.035),ylim=(0,1.17*ymax),
-           xlabel=r'$\xi$',ylabel=r'$D$')
-    ax.set_xticks([.1,.2,.5,1],labels=['0.1','0.2','0.5','1'])
+    ax.set(xscale='log',xlim=(.95,10),ylim=(0,1.17*ymax),
+           xlabel=r'$\beta^\prime/\beta$',ylabel=r'$\mathcal{L}(\beta\rightarrow\beta^\prime)$')
     ax.xaxis.set_minor_formatter(NullFormatter())
-    ax.annotate('cooling',xy=(.48,.94),xytext=(.78,.94),xycoords='axes fraction',
+    ax.annotate('cooling',xy=(.51,.93),xytext=(.18,.93),xycoords='axes fraction',
                 ha='center',va='center',color='#687D89',
                 arrowprops=dict(arrowstyle='->',color='#687D89',lw=1))
+    ax.yaxis.set_major_locator(MaxNLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(2))
     ax.grid(axis='y',color='#DCE4E8',lw=.65)
     ax.set_axisbelow(True)
-    fig.subplots_adjust(left=.16,right=.97,bottom=.18,top=.94)
+    fig.subplots_adjust(left=.23,right=.96,bottom=.22,top=.94)
     output_dir.mkdir(parents=True,exist_ok=True)
     save_figure(fig,output_dir/'birth-death-cooling')
     plt.close(fig)

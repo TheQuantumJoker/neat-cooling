@@ -20,10 +20,10 @@ from scipy.optimize import minimize_scalar
 
 @dataclass(frozen=True)
 class Model:
-    energies: tuple = (0.0, 0.003, 0.1)
-    beta: float = 1.0             # Fixed bath inverse temperature; Ti = 1/beta.
-    r_theta: float = 0.5         # Physical relaxation eigenrates, not metric entries.
-    r_phi: float = 10.0
+    energies: tuple = (0.0, 0.03, 1.0)
+    beta: float = 0.1             # Fixed bath inverse temperature; Ti = 1/beta.
+    r_theta: float = 5.0         # Physical relaxation eigenrates, not metric entries.
+    r_phi: float = 100.0
     near_scale: float = 53.62484152434405      # H_final = scale * H_reference.
     far_scale: float = 206.0341352609942
     max_scale: float = 300.0
@@ -212,10 +212,28 @@ def make_figures(model, rows, output):
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
-    from matplotlib.ticker import AutoMinorLocator
+    from matplotlib.ticker import AutoMinorLocator, MaxNLocator
+    from matplotlib.patches import FancyArrowPatch
+    from mpl_toolkits.mplot3d import proj3d
+
+    class TangentArrow3D(FancyArrowPatch):
+        """Project physical 3D endpoints, with equal-sized heads in points."""
+        def __init__(self, start, end, **kwargs):
+            super().__init__((0, 0), (0, 0), **kwargs)
+            self.endpoints = np.column_stack((start, end))
+
+        def do_3d_projection(self, renderer=None):
+            x, y, z = proj3d.proj_transform(*self.endpoints, self.axes.get_proj())
+            self.set_positions((x[0], y[0]), (x[1], y[1]))
+            return float(np.min(z))
+
+        def draw(self, renderer):
+            self.do_3d_projection()
+            super().draw(renderer)
 
     navy, teal, amber, red = '#19344A', '#007E87', '#CF8B24', '#C54E53'
-    plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 10,
+    blue = '#2675B5'
+    plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 16,
                          'axes.labelcolor': navy, 'text.color': navy,
                          'axes.edgecolor': '#A5B1B9', 'xtick.color': navy,
                          'ytick.color': navy, 'pdf.fonttype': 42, 'ps.fonttype': 42,
@@ -239,59 +257,102 @@ def make_figures(model, rows, output):
     qred = np.array([np.sqrt(gibbs(r, model)) for r in np.r_[0, np.geomspace(.01, 3000, 1100)]]).T
     ax.plot(*xyz(qred), color=red, lw=2.0, zorder=5)
     for scale, color, label in [(model.near_scale, amber, r'$B$'),
-                                 (model.far_scale, teal, r'$C$')]:
+                                 (model.far_scale, blue, r'$C$')]:
         sol, _ = numerical_path(scale, model)
         y = sol.sol(np.linspace(0, 1, 401))
         path = sphere(y[0], y[1])
         ax.plot(*xyz(path), color=color, lw=2.8, zorder=6)
         point = path[:, -1]
         ax.scatter(*xyz(point), color=color, s=42, depthshade=False, zorder=8)
-        ax.text(point[0]+.02, point[2]-.018, point[1]+.022, label,
-                color=color, fontsize=12, zorder=9)
+        label_offset = (-.025, .018, .065) if label == r'$B$' else (-.060, .018, -.080)
+        if label == r'$B$':
+            ax.text(point[0]+label_offset[0], point[2]+label_offset[1], point[1]+label_offset[2], label,
+                    color=color, fontsize=16, zorder=9)
+        else:
+            c_label_point = point.copy()
+    # Tangents in the physical square-root probability embedding, at C.
+    # The arriving geodesic is parametrized at constant thermodynamic speed.
+    sol, distance = numerical_path(model.far_scale, model)
+    theta, phi, dt, dp = sol.sol(1)
+    point = sphere(theta, phi)
+    a, b = frame(theta, phi)
+    arriving = (a * dt + b * np.sin(theta) * dp) / distance
+    energies = np.asarray(model.energies)
+    cooling = -1 / 2 * (energies - energies @ (point**2)) * point
+    def metric(u, v):
+        return 4 / model.beta * ((a @ u)*(a @ v)/model.r_theta
+                                + (b @ u)*(b @ v)/model.r_phi)
+    angle = np.degrees(np.arccos(np.clip(
+        metric(arriving, cooling) / np.sqrt(metric(arriving, arriving)
+                                            * metric(cooling, cooling)), -1, 1)))
+    for vector, color, label, length in [
+            (arriving, blue, r'$T$', .34),
+            (cooling, red, r"$\frac{\mathrm{d}\omega}{\mathrm{d}\beta^\prime}$", .34)]:
+        arrow = length * vector / np.linalg.norm(vector)
+        ax.add_artist(TangentArrow3D(
+            xyz(point), xyz(point + arrow), color=color, linewidth=1.6,
+            arrowstyle='-|>,head_length=0.55,head_width=0.28',
+            mutation_scale=12, shrinkA=0, shrinkB=0, zorder=12))
+        label_point = point + 1.15*arrow
+        if color == red:
+            label_point += np.array([.06, .015, 0.])
+        else:
+            label_point += np.array([0., .025, 0.])
+        ax.text(*xyz(label_point), label, color=color,
+                fontsize=16, ha='right' if color == red else 'center', zorder=13)
+    (output/'sphere-endpoint-vectors.json').write_text(json.dumps(dict(
+        scale=model.far_scale, point=point.tolist(),
+        arriving_unit_tangent=arriving.tolist(), cooling_tangent=cooling.tolist(),
+        metric_pairing=float(metric(arriving, cooling)),
+        metric_angle_degrees=float(angle)), indent=2)+'\n')
     initial = np.sqrt(gibbs(1, model))
     ax.scatter(*xyz(initial), color=navy, s=48, depthshade=False, zorder=9)
-    ax.text(initial[0]-.025, initial[2]+.018, initial[1]+.035, '$A$', color=navy, fontsize=12)
-    for vec, label in [(np.array([1.08,0,0]), r'$q_0=\sqrt{\omega_0}$'),
-                        (np.array([0,1.08,0]), r'$q_2=\sqrt{\omega_2}$'),
-                        (np.array([0,0,1.08]), r'$q_1=\sqrt{\omega_1}$')]:
+    ax.text(initial[0]-.025, initial[2]+.018, initial[1]+.035, '$A$', color=navy, fontsize=16)
+    for vec, label in [(np.array([1.08,0,0]), r'$\sqrt{\omega_1}$'),
+                        (np.array([0,1.08,0]), r'$\sqrt{\omega_3}$'),
+                        (np.array([0,0,1.08]), r'$\sqrt{\omega_2}$')]:
         ax.quiver(0,0,0,*vec, color=navy, linewidth=.8, arrow_length_ratio=.04)
         label_position = vec.copy()
         if vec[2] == 0:
-            label_position[2] -= .085
-        ax.text(*label_position, label, fontsize=10, ha='center')
+            label_position[2] -= .135
+        else:
+            label_position[2] += .055
+        ax.text(*label_position, label, fontsize=16, ha='center')
     ax.view_init(elev=20, azim=65)
     ax.set(xlim=(0,1.12), ylim=(0,1.12), zlim=(0,1.12))
     ax.set_box_aspect((1,1,1), zoom=1.12)
+    cx, cy, _ = proj3d.proj_transform(*xyz(c_label_point), ax.get_proj())
+    ax.annotate('$C$', (cx, cy), xytext=(-12, -2), textcoords='offset points',
+                ha='right', va='center', color=blue, fontsize=16, zorder=14)
     ax.set_axis_off()
     fig.subplots_adjust(left=0,right=1,bottom=0,top=1)
     save_figure(fig, output/'qutrit-cooling-sphere')
     plt.close(fig)
 
     fig, ax = plt.subplots(figsize=(4.5, 3.8))
-    temp = np.geomspace(1/model.max_scale,1,600)
-    lengths = np.array([exact_distance(1/t,model) for t in temp])
+    temp = np.geomspace(1,model.max_scale,600)
+    lengths = np.array([exact_distance(t,model) for t in temp])
     ax.plot(temp, lengths, color=navy, lw=2, label='Exact geodesic distance')
-    ax.scatter([r['xi'] for r in rows], [r['bvp_length'] for r in rows],
-               s=22, facecolor='white', edgecolor=navy, linewidth=.85, zorder=3, label='Independent numerical BVP')
-    tn, tf = 1/model.near_scale, 1/model.far_scale
-    ax.axvspan(tf,tn,color=teal,alpha=.065,lw=0)
+    tn, tf = model.near_scale, model.far_scale
+    ax.axvspan(tn,tf,color=teal,alpha=.065,lw=0)
     for t, scale, color, label, offset in [(tn,model.near_scale,amber,'B',(8,8)),
-                                          (tf,model.far_scale,teal,'C',(8,-16))]:
+                                          (tf,model.far_scale,blue,'C',(8,-16))]:
         d = exact_distance(scale,model)
         ax.vlines(t,0,d,color=color,lw=1,linestyle=(0,(3,3)),alpha=.8)
         ax.scatter(t,d,s=55,color=color,zorder=5)
-        ax.annotate(label,(t,d),xytext=offset,textcoords='offset points',color=color,fontsize=10)
+        ax.annotate(label,(t,d),xytext=offset,textcoords='offset points',color=color,fontsize=16)
     ax.scatter(1,0,s=40,color=navy,zorder=5,clip_on=False)
-    ax.annotate('A',(1,0),xytext=(-13,10),textcoords='offset points',fontsize=11)
-    ax.set(xscale='log', xlim=(1/model.max_scale,1.08),ylim=(0,lengths.max()*1.12),
-           xlabel=r'$\xi$', ylabel=r'$D$')
-    ax.annotate('cooling',xy=(.57,.93),xytext=(.83,.93),xycoords='axes fraction',
+    ax.annotate('A',(1,0),xytext=(8,10),textcoords='offset points',fontsize=16)
+    ax.set(xscale='log', xlim=(.95,model.max_scale*1.05),ylim=(0,lengths.max()*1.12),
+           xlabel=r'$\beta^\prime/\beta$', ylabel=r'$\mathcal{L}(\beta\rightarrow\beta^\prime)$')
+    ax.annotate('cooling',xy=(.51,.93),xytext=(.18,.93),xycoords='axes fraction',
                 textcoords='axes fraction',ha='center',va='center',color='#687D89',
                 arrowprops=dict(arrowstyle='->',color='#687D89',lw=1))
+    ax.yaxis.set_major_locator(MaxNLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(2))
     ax.grid(axis='y',color='#DCE4E8',lw=.65)
     ax.set_axisbelow(True)
-    fig.subplots_adjust(left=.16,right=.97,bottom=.18,top=.94)
+    fig.subplots_adjust(left=.23,right=.96,bottom=.22,top=.94)
     save_figure(fig,output/'qutrit-cooling-distance')
     plt.close(fig)
 
