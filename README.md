@@ -1,14 +1,7 @@
 # Cooling more while dissipating less
 
-Code, numerical data, and figures for the Near-Equilibrium Anomalous Tradeoff
-(NEAT): optimal cooling to a colder target can dissipate less work at the same
-protocol duration in the slow-driving regime.
-
-Companion numerical material for **Cooling more while dissipating less:
-anomalous tradeoffs from thermodynamic geometry**. Start here to connect the
-paper's qutrit and birth–death examples to their algorithms and numerical checks.
-The manuscript is maintained separately; the mapping below follows its version
-of 26 October 2026.
+Code, numerical data, and figures for the paper [*Cooling more while dissipating
+less: anomalous tradeoffs from thermodynamic geometry*, arXiv 2610.27948](https://arxiv.org/abs/2610.27948).
 
 ## Algorithms and numerical precision
 
