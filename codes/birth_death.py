@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Final simulations for the thermodynamic-length Mpemba project.
+"""Birth–death numerical methods for the NEAT cooling paper.
 
 The model is a nearest-neighbour d-level Davies ladder.  In cumulative
 population coordinates Pi_m = sum_{i=0}^m p_i, the thermodynamic metric is
@@ -38,7 +38,7 @@ from scipy.optimize import minimize
 
 @dataclass(frozen=True)
 class Bath:
-    A: float = 10.0
+    A: float = 10.0  # Spectral amplitude C in Eq. (20) of the manuscript.
     gamma: float = 0.30
     Omega: float = 1.0
     omega_c: float = 10.0
@@ -101,7 +101,7 @@ def _import_jax():
         import jax.numpy as jnp
     except ImportError as exc:  # pragma: no cover - depends on local environment
         raise RuntimeError(
-            "JAX is required for verify/recompute. Install requirements.txt first."
+            "JAX is required for verify/recompute in addition to requirements.txt; see README.md."
         ) from exc
     jax.config.update("jax_enable_x64", True)
     return jax, jnp

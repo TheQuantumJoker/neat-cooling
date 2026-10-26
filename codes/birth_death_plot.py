@@ -70,7 +70,7 @@ def make_plot(curve_file, output_dir, certification_file=None):
         report['checks'][f'd{d}_ohmic_monotone'] = True
     ymax = max(v.max() for curves in values.values() for v in curves)
     ax.set(xscale='log',xlim=(.95,10),ylim=(0,1.17*ymax),
-           xlabel=r'$\beta^\prime/\beta$',ylabel=r'$\mathcal{L}(\beta\rightarrow\beta^\prime)$')
+           xlabel=r'$\beta^\prime/\beta$',ylabel=r'$L(\beta\rightarrow\beta^\prime)$')
     ax.xaxis.set_minor_formatter(NullFormatter())
     ax.annotate('cooling',xy=(.51,.93),xytext=(.18,.93),xycoords='axes fraction',
                 ha='center',va='center',color='#687D89',

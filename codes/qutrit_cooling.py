@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reversible constant-eigenrate qutrit: one cooling model, two figures.
 
-Run from any directory. Outputs are relative to this file's Overleaf project.
+Run from any directory. Outputs are relative to this repository's figures/qutrit-cooling directory.
 Python >= 3.9; NumPy, SciPy and Matplotlib. No external data are required.
 The boundary-value solver is initialized with a straight line in angle space,
 independently of the exact great-circle construction.
@@ -286,8 +286,8 @@ def make_figures(model, rows, output):
         metric(arriving, cooling) / np.sqrt(metric(arriving, arriving)
                                             * metric(cooling, cooling)), -1, 1)))
     for vector, color, label, length in [
-            (arriving, blue, r'$T$', .34),
-            (cooling, red, r"$\frac{\mathrm{d}\omega}{\mathrm{d}\beta^\prime}$", .34)]:
+            (arriving, blue, r'$\mathbf{v}_\varsigma$', .34),
+            (cooling, red, r"$\mathbf{v}_\omega$", .34)]:
         arrow = length * vector / np.linalg.norm(vector)
         ax.add_artist(TangentArrow3D(
             xyz(point), xyz(point + arrow), color=color, linewidth=1.6,
@@ -318,9 +318,29 @@ def make_figures(model, rows, output):
         else:
             label_position[2] += .055
         ax.text(*label_position, label, fontsize=16, ha='center')
+    # Coordinate guide in the free region near the origin.  The polar
+    # axis is sqrt(omega_2), and azimuth starts at sqrt(omega_1).
+    guide_color = '#675180'
+    guide_theta, guide_phi, guide_radius = 1.05, 1.50, 0.43
+    tip = guide_radius * sphere(guide_theta, guide_phi)
+    projection = tip.copy()
+    projection[1] = 0
+    ax.add_artist(TangentArrow3D(
+        (0, 0, 0), xyz(tip), color=guide_color, linewidth=1.3,
+        arrowstyle='-|>', mutation_scale=11, shrinkA=0, shrinkB=0, zorder=15))
+    ax.plot(*xyz(np.column_stack([np.zeros(3), projection, tip])),
+            color=guide_color, lw=1, ls=(0, (3, 2)), zorder=14)
+    polar_arc = 0.27 * sphere(np.linspace(0, guide_theta, 50), guide_phi)
+    azimuth_arc = 0.23 * sphere(np.full(50, np.pi/2), np.linspace(0, guide_phi, 50))
+    ax.plot(*xyz(polar_arc), color=guide_color, lw=1, zorder=15)
+    ax.plot(*xyz(azimuth_arc), color=guide_color, lw=1, zorder=15)
+    ax.text(*xyz(0.34 * sphere(guide_theta/2, guide_phi)),
+            r'$\theta$', color=guide_color, fontsize=13, zorder=16)
+    ax.text(*xyz(0.30 * sphere(np.pi/2, guide_phi/2)),
+            r'$\varphi$', color=guide_color, fontsize=13, va='top', zorder=16)
     ax.view_init(elev=20, azim=65)
     ax.set(xlim=(0,1.12), ylim=(0,1.12), zlim=(0,1.12))
-    ax.set_box_aspect((1,1,1), zoom=1.12)
+    ax.set_box_aspect((1,1,1), zoom=1.02)
     cx, cy, _ = proj3d.proj_transform(*xyz(c_label_point), ax.get_proj())
     ax.annotate('$C$', (cx, cy), xytext=(-12, -2), textcoords='offset points',
                 ha='right', va='center', color=blue, fontsize=16, zorder=14)
@@ -344,7 +364,7 @@ def make_figures(model, rows, output):
     ax.scatter(1,0,s=40,color=navy,zorder=5,clip_on=False)
     ax.annotate('A',(1,0),xytext=(8,10),textcoords='offset points',fontsize=16)
     ax.set(xscale='log', xlim=(.95,model.max_scale*1.05),ylim=(0,lengths.max()*1.12),
-           xlabel=r'$\beta^\prime/\beta$', ylabel=r'$\mathcal{L}(\beta\rightarrow\beta^\prime)$')
+           xlabel=r'$\beta^\prime/\beta$', ylabel=r'$L(\beta\rightarrow\beta^\prime)$')
     ax.annotate('cooling',xy=(.51,.93),xytext=(.18,.93),xycoords='axes fraction',
                 textcoords='axes fraction',ha='center',va='center',color='#687D89',
                 arrowprops=dict(arrowstyle='->',color='#687D89',lw=1))

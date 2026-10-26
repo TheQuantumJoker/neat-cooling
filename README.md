@@ -4,11 +4,63 @@ Code, numerical data, and figures for the Near-Equilibrium Anomalous Tradeoff
 (NEAT): optimal cooling to a colder target can dissipate less work at the same
 protocol duration in the slow-driving regime.
 
-**Article:** [link to be added after publication]
+Companion numerical material for **Cooling more while dissipating less:
+anomalous tradeoffs from thermodynamic geometry**. Start here to connect the
+paper's qutrit and birth–death examples to their algorithms and numerical checks.
+The manuscript is maintained separately; the mapping below follows its version
+of 26 October 2026.
 
-This private working repository will evolve with the manuscript. The manuscript
-is maintained separately in Overleaf; this repository contains the numerical
-and figure-generation material.
+## Algorithms and numerical precision
+
+| Calculation | Algorithm | Settings and interpretation |
+| --- | --- | --- |
+| Qutrit distance, Eq. (15), Fig. 2(a,b) | Exact great-circle distance in the rescaled spherical coordinates; independent integration of the geodesic boundary-value problem with SciPy `solve_bvp` | Float64; BVP residual tolerance `1e-9`, initial mesh 61 points, at most 20,000 nodes. Length integration: `quad` with absolute and relative tolerances `1e-11`. Validation checks 33 targets, including the two selected extrema. |
+| Birth–death distance, Eqs. (18–20), Fig. 2(c) | Sine Fourier–Galerkin paths in log-gap coordinates, Gauss–Legendre quadrature, JAX automatic gradients in float64, SciPy L-BFGS-B; optimize energy then length, continue branches forwards/backwards and keep the shorter branch | `ftol=1e-14`; `gtol=1e-10` for energy and `1e-9` for length. Full-curve defaults: `(K,Q)=(18,384)` for d=3, `(16,320)` for d=4; Ohmic controls `(12,256)`. These stopping tolerances are not error bounds on the global geodesic distance. |
+| Birth–death endpoint convergence checks | Higher-order Fourier calculation and a separate piecewise-linear path optimization | Archived high-order settings: `(K,Q)=(32,768)` for d=3 and `(24,640)` for d=4. Independent polylines: 90 segments × 12 quadrature nodes for d=3; 70 × 10 for d=4. |
+| Carnot cycle | Schematic reversible cycle | No dynamical solver or numerical accuracy claim. |
+
+**Observed precision, rather than just solver tolerances.** The archived
+[birth–death convergence report](codes/data/birth-death/thermodynamic_length_certification.json)
+compares targets `beta'/beta=4.25` and `9`. Raising the Fourier basis from
+20 to 32 modes (d=3), or 18 to 24 (d=4), changes individual lengths by at most
+`7.1e-6` and `1.5e-5`, respectively. For fixed high-order paths, raising quadrature
+from 256 to 1024 nodes changes lengths by less than `5e-11`. This checks
+quadrature only, not path optimization. Independent polylines change the
+inversion gap by `1.14e-4` (d=3) and `6.36e-4` (d=4), compared with gaps of
+`0.04322` and `0.04152`. These are empirical convergence checks; the report's
+historical name “certification” does not mean a rigorous global error bound.
+
+The qutrit verifier requires absolute length disagreement below `1e-7`,
+maximum population-square-root path disagreement below `1e-6`, and sampled
+Markov/metric residuals below `1e-8`; its measured errors are written to
+[validation.json](figures/qutrit-cooling/validation.json). The 26 October 2026
+run (Python 3.11.14 and the pinned dependencies) found maximum length error
+`3.09e-14` and maximum path error `2.24e-12` over the 33 sampled targets.
+These observed agreements are not universal error bounds.
+
+**Reproducibility boundary:** the qutrit calculation runs from scratch, and
+the birth–death panel can be replotted from the included CSV. The original
+birth–death seed-coefficient NPZ archives are missing: `verify` and `recompute`
+require an external `--seed-file` and a separately installed JAX with float64
+support. The convergence figures above come from the archived report, not a
+new solver run. The pinned requirements cover qutrit verification and plotting;
+they do not include a validated JAX environment. All computations concern
+slow-driving equilibrium-path geometry, not finite-time master-equation evolution.
+
+## From paper notation to code
+
+| Paper | Code |
+| --- | --- |
+| Qutrit relaxation rates `r_theta`, `r_phi` | `Model.r_theta=5`, `Model.r_phi=100` in `codes/qutrit_cooling.py` |
+| Spectral amplitude `C` in Eq. (20) | `Bath.A=10` in `codes/birth_death.py`; the Ohmic control is `A=0` |
+| `nu_0`, `gamma_B`, `nu_c` | `Bath.Omega=1`, `Bath.gamma=0.30`, `Bath.omega_c=10` |
+| Cumulative populations `Omega_a` in Eq. (18) | `Pi` in the solver derivation; implementation transforms the diagonal cumulative-population metric to log-gap coordinates |
+| Target ratio `beta'/beta` | `scale` for the qutrit; `lambda` for birth–death. Stored CSV coordinate `xi=T_final/T_initial` is its reciprocal. |
+
+The positive-gap path is `y(s)=(1-s)y_initial+s*y_final+sum_k a_k sin(k*pi*s)`,
+with `y_a=log(e_{a+1}-e_a)` and fixed endpoints. This enforces ordered levels
+and samples the positive-gap control domain. The branch search is a numerical
+minimization in this domain, not a proof of global optimality over all controls.
 
 ## Reproduce
 
@@ -25,10 +77,12 @@ Outputs are written to `figures/` relative to this repository, independent of
 the current working directory. The committed PDFs are the current manuscript
 assets. The introductory qualitative illustration is supplied as a PNG.
 The qutrit and birth–death scripts additionally generate PNG/SVG previews and
-numerical reports. Existing PNG/SVG previews, qutrit CSV files, and generated
-JSON reports are retained as **earlier snapshots** and have not been refreshed
-in this synchronization. Use the committed PDFs for the current manuscript;
-rerun the scripts to regenerate the other formats and reports with current parameters.
+numerical reports. The current qutrit and birth–death PNG/SVG previews and validation reports were
+regenerated on 26 October 2026. The qutrit paths now use the manuscript's energy
+units `(0, 0.03, 1)` and `beta=0.1`; older reports used an equivalent rescaling.
+The standalone `qutrit-endpoint-vectors.*` and `endpoint-vectors.json` remain
+legacy illustrations, not the current sphere panel; its vector data are in
+`sphere-endpoint-vectors.json`.
 
 ## Models and files
 
@@ -46,8 +100,8 @@ construction and Markov-generator identities.
 
 The birth–death calculation uses energies `(0, 0.72, 2.40)` for `d=3` and
 `(0, 0.72, 2.40, 2.70)` for `d=4`, with couplings `(1, 0.30)` and
-`(1, 0.30, 1)`. In manuscript notation the bath parameters are `A=10`,
-`nu_0=1`, `gamma_B=0.30`, `nu_c=10`; the Ohmic control sets only `A=0`.
+`(1, 0.30, 1)`. In manuscript notation the bath parameters are `C=10` (code: `A=10`),
+`nu_0=1`, `gamma_B=0.30`, `nu_c=10`; the Ohmic control sets only `C=0` (code: `A=0`).
 Bath inverse temperature is `1`. Both distance panels use the logarithmic
 horizontal coordinate `beta'/beta`, increasing toward colder targets, and
 vertical coordinate `L(beta -> beta')`. The preserved birth–death CSV uses
@@ -84,12 +138,11 @@ a Python-generated plot.
 ## Updating the manuscript figures
 
 Edit the scripts and data here, regenerate the affected outputs, inspect them,
-and copy the corresponding files from `figures/` into Overleaf's `figures/`
-directory. Commit the code and regenerated data/figures together so their
+and copy the corresponding PDFs from `figures/` into the manuscript checkout
+root, where its LaTeX sources load them. Commit the code and regenerated data/figures together so their
 parameters and results remain traceable. Publication releases can be tagged
 once the article and numerical material are finalized.
 
-The current repository snapshot was synchronized from the manuscript's active
-code and figure assets on 30 September 2026. No numerical solvers were rerun
-as part of that synchronization; the birth–death source data and certification
-report are unchanged.
+The documentation and code-to-paper mapping were reviewed against the manuscript
+on 26 October 2026. Birth–death samples and the archived convergence report
+remain unchanged; replotting does not rerun their optimization.

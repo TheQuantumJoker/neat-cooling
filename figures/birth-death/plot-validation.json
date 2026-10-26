@@ -3,7 +3,7 @@
   "source_sha256": "320063e5fd22194d832c4a9acecbd6e466665fff9921b52712037d259efa36b2",
   "samples_per_curve": 39,
   "interpolation": "none; straight segments between original samples",
-  "xi_definition": "beta_i / beta_f = T_f / T_i",
+  "x_definition": "beta_prime / beta = T_i / T_f",
   "checks": {
     "d3_inversion_gap": 0.04322164563329611,
     "d4_inversion_gap": 0.04152144435498917,
