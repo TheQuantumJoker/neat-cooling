@@ -1,7 +1,13 @@
-# Cooling more while dissipating less
+# Cooling more while dissipating less: anomalous tradeoffs from thermodynamic geometry
 
-Code, numerical data, and figures for the paper [*Cooling more while dissipating
-less: anomalous tradeoffs from thermodynamic geometry*, arXiv 2610.27948](https://arxiv.org/abs/2610.27948).
+*Last updated October 26, 2026.*
+
+**DISCLAIMER:** this repository is meant to be a technical supplement allowing the interested reader to easily reproduce all results and simulations from the paper [*Cooling more while dissipating less: anomalous tradeoffs from thermodynamic geometry* (arXiv 2610.27948)](https://arxiv.org/abs/2610.27948).
+This repository is (mainly) AI generated, feeding as input some specifics, the original codes, data, and manuscript.
+All material hereby presented has been reviewed by a human.
+
+Code, numerical data, and figures for the paper
+
 
 ## Algorithms and numerical precision
 
@@ -10,7 +16,6 @@ less: anomalous tradeoffs from thermodynamic geometry*, arXiv 2610.27948](https:
 | Qutrit distance, Eq. (15), Fig. 2(a,b) | Exact great-circle distance in the rescaled spherical coordinates; independent integration of the geodesic boundary-value problem with SciPy `solve_bvp` | Float64; BVP residual tolerance `1e-9`, initial mesh 61 points, at most 20,000 nodes. Length integration: `quad` with absolute and relative tolerances `1e-11`. Validation checks 33 targets, including the two selected extrema. |
 | Birth–death distance, Eqs. (18–20), Fig. 2(c) | Sine Fourier–Galerkin paths in log-gap coordinates, Gauss–Legendre quadrature, JAX automatic gradients in float64, SciPy L-BFGS-B; optimize energy then length, continue branches forwards/backwards and keep the shorter branch | `ftol=1e-14`; `gtol=1e-10` for energy and `1e-9` for length. Full-curve defaults: `(K,Q)=(18,384)` for d=3, `(16,320)` for d=4; Ohmic controls `(12,256)`. These stopping tolerances are not error bounds on the global geodesic distance. |
 | Birth–death endpoint convergence checks | Higher-order Fourier calculation and a separate piecewise-linear path optimization | Archived high-order settings: `(K,Q)=(32,768)` for d=3 and `(24,640)` for d=4. Independent polylines: 90 segments × 12 quadrature nodes for d=3; 70 × 10 for d=4. |
-| Carnot cycle | Schematic reversible cycle | No dynamical solver or numerical accuracy claim. |
 
 **Observed precision, rather than just solver tolerances.** The archived
 [birth–death convergence report](codes/data/birth-death/thermodynamic_length_certification.json)
@@ -127,15 +132,3 @@ a Python-generated plot.
   the current sphere panel incorporates its vectors directly in `qutrit_cooling.py`.
 - `legacy/mpemba.nb` is the inherited Mathematica notebook, retained for
   provenance; it is not needed to reproduce the current figures.
-
-## Updating the manuscript figures
-
-Edit the scripts and data here, regenerate the affected outputs, inspect them,
-and copy the corresponding PDFs from `figures/` into the manuscript checkout
-root, where its LaTeX sources load them. Commit the code and regenerated data/figures together so their
-parameters and results remain traceable. Publication releases can be tagged
-once the article and numerical material are finalized.
-
-The documentation and code-to-paper mapping were reviewed against the manuscript
-on 26 October 2026. Birth–death samples and the archived convergence report
-remain unchanged; replotting does not rerun their optimization.
